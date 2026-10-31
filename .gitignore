@@ -1,0 +1,31 @@
+# 依赖与产物
+node_modules/
+.next/
+dist/
+out/
+coverage/
+
+# 本地运行时（Node 便携版，见 scripts/check-node.mjs）
+.tools/
+
+# 数据
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+
+# 环境变量
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# 杂项
+*.log
+.tmp/
+.DS_Store
+Thumbs.db
+tsconfig.tsbuildinfo
+*.tsbuildinfo

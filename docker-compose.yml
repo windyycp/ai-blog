@@ -1,0 +1,73 @@
+name: ai-blog
+
+# 变量来源：`docker compose --env-file .env.docker up -d`
+# 数据库不在本文件里启动：PostgreSQL 由外部实例提供，只需在 .env.docker 里配好 DATABASE_URL。
+# 想用 SQLite 的话把 DB_DRIVER 改成 sqlite，并给出 SQLITE_PATH（数据落在 blogdata 卷）。
+
+services:
+  api:
+    image: ${REGISTRY:-registry.cn-shenzhen.aliyuncs.com}/${NAMESPACE:-ycp}/ai-blog-api:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DB_DRIVER: ${DB_DRIVER:-postgres}
+      # 指向已有 PostgreSQL，例如 postgres://user:pass@host.docker.internal:5432/blog
+      DATABASE_URL: ${DATABASE_URL:-}
+      SQLITE_PATH: ${SQLITE_PATH:-}
+      ALLOW_SQLITE_IN_PROD: ${ALLOW_SQLITE_IN_PROD:-false}
+      PG_POOL_MAX: ${PG_POOL_MAX:-10}
+      SITE_URL: ${SITE_URL:-http://localhost:3000}
+      CORS_ORIGINS: ${SITE_URL:-http://localhost:3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+    volumes:
+      # 仅 sqlite 模式使用；postgres 模式下这个挂载不会被写入
+      - blogdata:/app/data
+    extra_hosts:
+      # 让 DATABASE_URL 可以直接写 host.docker.internal（Linux 上默认没有这条记录）
+      - 'host.docker.internal:host-gateway'
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3001/api/v1/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  web:
+    image: ${REGISTRY:-registry.cn-shenzhen.aliyuncs.com}/${NAMESPACE:-ycp}/ai-blog-web:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # 构建期烘焙进 canonical / og:url，换域名要重新构建 web 镜像
+        NEXT_PUBLIC_SITE_URL: ${SITE_URL:-http://localhost:3000}
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://api:3001/api/v1
+      NEXT_PUBLIC_SITE_URL: ${SITE_URL:-http://localhost:3000}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:-dev-revalidate-secret}
+    ports:
+      - '${WEB_PORT:-3000}:3000'
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  blogdata:

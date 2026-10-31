@@ -1,0 +1,35 @@
+{
+  "name": "ai-blog",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.11 <23"
+  },
+  "scripts": {
+    "setup": "node scripts/check-node.mjs && node scripts/install-all.mjs",
+    "install:all": "node scripts/install-all.mjs",
+    "dev": "node scripts/dev.mjs",
+    "dev:api": "npm --prefix apps/api run dev",
+    "dev:web": "npm --prefix apps/web run dev",
+    "dev:pg": "npm --prefix apps/api run dev:pg",
+    "build": "npm --prefix apps/api run build && npm --prefix apps/web run build",
+    "start": "npm --prefix apps/api run start",
+    "typecheck": "npm --prefix packages/shared run typecheck && npm --prefix apps/api run typecheck && npm --prefix apps/web run typecheck",
+    "test": "npm --prefix apps/api run test",
+    "docker:build": "node scripts/docker-build.mjs",
+    "docker:push": "node scripts/docker-build.mjs --login --push",
+    "docker:up": "docker compose --env-file .env.docker up -d",
+    "docker:down": "docker compose --env-file .env.docker down",
+    "docker:logs": "docker compose --env-file .env.docker logs -f",
+    "db:migrate": "npm --prefix apps/api run db:migrate",
+    "db:seed": "npm --prefix apps/api run db:seed",
+    "db:parity": "npm --prefix apps/api run db:parity",
+    "db:check": "npm --prefix apps/api run db:check"
+  },
+  "dependencies": {
+    "zod": "3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "5.7.2"
+  }
+}

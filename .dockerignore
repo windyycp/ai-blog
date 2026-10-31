@@ -1,0 +1,27 @@
+# 依赖与构建产物一律在镜像内重新生成
+**/node_modules
+**/.next
+**/dist
+**/*.tsbuildinfo
+
+# 本地运行数据与工具链
+data/
+.tools/
+.tmp/
+*.log
+
+# 版本控制与编辑器
+.git
+.gitignore
+.vscode
+.idea
+
+# 真实环境变量不进镜像，示例文件保留
+**/.env
+**/.env.local
+**/.env.*.local
+.env.docker
+
+# 文档与截图
+*.md
+!README.md
